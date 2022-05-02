@@ -1,12 +1,14 @@
 import express, { json } from "express";
 import cors from "cors";
 import { MongoClient } from "mongodb";
+import dotenv from "dotenv";
 
 const app = express();
 app.use(cors());
 app.use(json());
+dotenv.config();
 
-const mongoClient = new MongoClient("mongodb://localhost:27017");
+const mongoClient = new MongoClient(process.env.MONGO_URL);
 
 app.post("/participants", async (req, res) => {
     const body = req.body;
