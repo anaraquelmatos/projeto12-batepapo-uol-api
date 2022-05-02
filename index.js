@@ -1,7 +1,8 @@
 import express, { json } from "express";
 import cors from "cors";
-import { MongoClient } from "mongodb";
+import { MongoClient, ObjectId } from "mongodb";
 import dotenv from "dotenv";
+import joi from "joi";
 
 const app = express();
 app.use(cors());
@@ -16,6 +17,15 @@ app.post("/participants", async (req, res) => {
         name: body.name,
         lastStatus: Date.now()
     }
+    const participantesSchema = joi.object({
+        name: joi.string().required()
+    });
+    const validacao = participantesSchema.validate({ name: body.name });
+
+    if (validacao.error) {
+        res.status(422).send(validacao.error.details.map(descricao => descricao.message))
+    }
+
     try {
         await mongoClient.connect();
         const database = mongoClient.db("projeto");
@@ -31,14 +41,14 @@ app.post("/participants", async (req, res) => {
 
 app.get("/participants", async (req, res) => {
 
-    try{
+    try {
         await mongoClient.connect();
         const database = mongoClient.db("projeto");
         const participantes = await database.collection("participantes").find().toArray();
         res.send(participantes);
         mongoClient.close();
     }
-    catch (e){
+    catch (e) {
         res.sendStatus(500);
         mongoClient.close();
     }
