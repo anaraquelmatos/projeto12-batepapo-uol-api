@@ -23,15 +23,22 @@ app.post("/participants", async (req, res) => {
     const validacao = participantesSchema.validate({ name: body.name });
 
     if (validacao.error) {
-        res.status(422).send(validacao.error.details.map(descricao => descricao.message))
+        res.status(422).send(validacao.error.details.map(descricao => descricao.message));
+        return;
     }
 
     try {
         await mongoClient.connect();
         const database = mongoClient.db("projeto");
-        await database.collection("participantes").insertOne(participantesNovo);
-        res.sendStatus(201);
-        mongoClient.close();
+        const verificacao = await database.collection("participantes").findOne({ name: body.name });
+        if (verificacao) {
+            res.sendStatus(409);
+            return;
+        } else {
+            await database.collection("participantes").insertOne(participantesNovo);
+            res.sendStatus(201);
+            mongoClient.close();
+        }
     }
     catch (e) {
         res.sendStatus(500);
