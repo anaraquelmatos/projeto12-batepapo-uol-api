@@ -27,5 +27,20 @@ app.post("/participants", async (req, res) => {
     }
 });
 
+app.get("/participants", async (req, res) => {
+
+    try{
+        await mongoClient.connect();
+        const database = mongoClient.db("projeto");
+        const participantes = await database.collection("participantes").find().toArray();
+        res.send(participantes);
+        mongoClient.close();
+    }
+    catch (e){
+        res.sendStatus(500);
+        mongoClient.close();
+    }
+});
+
 app.listen(5000);
 
