@@ -132,6 +132,28 @@ app.get("/messages", async (req, res) => {
     }
 });
 
+app.post("/status", async (req, res) => {
+    const { user } = req.headers;
+    const statusAtualizado = {
+        lastStatus: Date.now()
+    }
+
+    try {
+        const verificacao = await database.collection("participantes").findOne({ name: user });
+        if (!verificacao) {
+            res.sendStatus(404);
+            return;
+        }
+        await database.collection("participantes").updateOne({
+            name: user
+        }, { $set: statusAtualizado })
+        res.sendStatus(200);
+    }
+    catch (e) {
+        console.log(e);
+    }
+});
+
 
 app.listen(5000);
 
