@@ -102,6 +102,36 @@ app.post("/messages", async (req, res) => {
     }
 });
 
+app.get("/messages", async (req, res) => {
+
+    const { user } = req.headers;
+    let array = [];
+    const limite = parseInt(req.query.limit);
+    try {
+        const mensagens = await database.collection("mensagens").find({}).toArray();
+
+        for (let i = 0; i < mensagens.length; i++) {
+            if (mensagens[i].type === "message" || mensagens[i].type === "status") {
+                array.push(mensagens[i]);
+            }
+            if (mensagens[i].type === "private_message" && (mensagens[i].to === user || mensagens[i].from === user)) {
+                array.push(mensagens[i]);
+            }
+
+        }
+
+        if (!limite) {
+            res.send(array);
+        } else {
+            const qtdMensagem = array.reverse().splice(0, limite).reverse();
+            res.send(qtdMensagem);
+        }
+    }
+    catch (e) {
+        console.log(e);
+    }
+});
+
 
 app.listen(5000);
 
