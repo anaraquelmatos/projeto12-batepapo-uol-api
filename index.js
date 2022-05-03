@@ -154,6 +154,75 @@ app.post("/status", async (req, res) => {
     }
 });
 
+app.delete('/messages/:id', async (req, res) => {
+    const { id } = req.params;
+    const { user } = req.headers;
+
+    try {
+        const mensagemValida = await database.collection("mensagens").findOne({ _id: new ObjectId(id) });
+
+        if (!mensagemValida) {
+            res.sendStatus(404);
+            return;
+        }
+        if (mensagemValida.from !== user) {
+            res.sendStatus(401);
+            return;
+        }
+        await database.collection("mensagens").deleteOne({ _id: new ObjectId(id) });
+    } catch (e) {
+        console.log(e);
+    }
+});
+
+app.put('/messages/:id', async(req, res) => {
+	const { id } = req.params;
+    const { user } = req.headers;
+    const body = req.body;
+
+    const mensagemAtualizada = {
+        from: user,
+        to: body.to,
+        text: body.text,
+        type: body.type,
+    }
+
+    const mesagensSchema = joi.object({
+        to: joi.string().required(),
+        type: joi.string().pattern(/^message|private_message$/),
+        text: joi.string().required(),
+        from: joi.string().valid(user)
+    });
+    const validacao = mesagensSchema.validateAsync({ to: body.to, text: body.text, type: body.type, from: user });
+
+    if (validacao.error) {
+        res.sendStatus(422);
+        return;
+    }
+
+    try{
+        const idValido = await database.collection("mensagens").findOne({ _id: new ObjectId(id) });
+
+        if (!idValido) {
+            res.sendStatus(404);
+            return;
+        }
+        if (idValido.from !== user) {
+            res.sendStatus(401);
+            return;
+        }
+
+        await database.collection("mensagens").updateOne({ 
+			_id: idValido._id 
+		}, { $set: mensagemAtualizada })
+    }
+    catch (e){
+        console.log(e);
+    }
+	
+
+});
+
 setInterval(async () => {
     try {
         const verificacao = await database.collection("participantes").find({}).toArray();
@@ -177,27 +246,6 @@ setInterval(async () => {
     }
 
 }, 15000);
-
-app.delete('/messages/:id', async (req, res) => {
-    const { id } = req.params;
-    const { user } = req.headers;
-
-    try {
-        const mensagemValida = await database.collection("mensagens").findOne({ _id: new ObjectId(id) });
-
-        if (!mensagemValida) {
-            res.sendStatus(404);
-            return;
-        }
-        if (mensagemValida.from !== user) {
-            res.sendStatus(401);
-            return;
-        }
-        await database.collection("mensagens").deleteOne({ _id: new ObjectId(id) });
-    } catch (e) {
-        console.log(e);
-    }
-});
 
 app.listen(5000);
 
