@@ -178,5 +178,26 @@ setInterval(async () => {
 
 }, 15000);
 
+app.delete('/messages/:id', async (req, res) => {
+    const { id } = req.params;
+    const { user } = req.headers;
+
+    try {
+        const mensagemValida = await database.collection("mensagens").findOne({ _id: new ObjectId(id) });
+
+        if (!mensagemValida) {
+            res.sendStatus(404);
+            return;
+        }
+        if (mensagemValida.from !== user) {
+            res.sendStatus(401);
+            return;
+        }
+        await database.collection("mensagens").deleteOne({ _id: new ObjectId(id) });
+    } catch (e) {
+        console.log(e);
+    }
+});
+
 app.listen(5000);
 
