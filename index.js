@@ -154,6 +154,29 @@ app.post("/status", async (req, res) => {
     }
 });
 
+setInterval(async () => {
+    try {
+        const verificacao = await database.collection("participantes").find({}).toArray();
+        const atualizacao = Date.now();
+
+        for (let i = 0; i < verificacao.length; i++) {
+            if ((atualizacao - verificacao[i].lastStatus) > 10000) {
+                await database.collection("participantes").deleteOne({ _id: new ObjectId(verificacao[i]._id) });
+                await database.collection("mensagens").insertOne({
+                    from: verificacao[i].name,
+                    to: "Todos",
+                    text: "sai na sala...",
+                    type: "status",
+                    time: dayjs().format("HH:mm:ss")
+                });
+            }
+        }
+    }
+    catch (e) {
+        console.log(e);
+    }
+
+}, 15000);
 
 app.listen(5000);
 
